@@ -79,6 +79,7 @@ import { ViewJournalModal } from '../components/ViewJournalModal';
 import { DeleteConfirmationModal } from '../components/DeleteConfirmationModal';
 import { Loader } from '../components/Loader';
 import { stripHtmlTags } from '../utils/htmlUtils';
+import { compressImage } from '../utils/imageCompression';
 import { authAPI, sectionsAPI, newsAPI, partnersAPI, heroesAPI, positionAPI, managementTeamAPI, commissionMembersAPI, innovationSpaceAPI, onlineServiceAPI, financialReportAPI, magazineAPI, newsletterAPI, booksAPI, reportsAPI, actsAndLegalAPI, policiesAPI, strategicPlanAPI, guidelineDocumentsAPI, conferenceAPI, exhibitionAPI, ongoingProjectAPI, areaOfPartnershipAPI, fellowshipGrantsAPI, pressReleaseAPI, statementAPI, costechVideoAPI, communityEngagementAPI, herinInstitutionAPI, directorateAPI, faqCategoryAPI, faqAPI, footerQuickLinkAPI, footerContactUsAPI, footerEresourceAPI, socialMediaPlatformAPI, journalAPI } from '../services/api';
 
 export function AdminPanel({ onLogout }) {
@@ -410,14 +411,80 @@ export function AdminPanel({ onLogout }) {
       
       if (newsList && newsList.length > 0) {
         // Map API response to news format
-        const mappedNews = newsList.map(item => ({
-          id: item.id?.toString() || Date.now().toString(),
-          title: item.title || '',
-          description: item.description || '',
-          date: item.date || item.created_at || new Date().toISOString().split('T')[0],
-          image: item.image || null,
-          createdAt: item.created_at || item.createdAt || new Date().toISOString(),
-        }));
+        const mappedNews = newsList.map(item => {
+          let parsedImages = [];
+          if (Array.isArray(item.images)) {
+            parsedImages = item.images.filter(Boolean);
+          } else if (typeof item.images === 'string') {
+            try {
+              const maybeJson = JSON.parse(item.images);
+              if (Array.isArray(maybeJson)) parsedImages = maybeJson.filter(Boolean);
+            } catch {
+              parsedImages = item.images.split(',').map((img) => img.trim()).filter(Boolean);
+            }
+          } else if (Array.isArray(item.list_of_image)) {
+            parsedImages = item.list_of_image.filter(Boolean);
+          }
+
+          let parsedOtherImages = [];
+          if (Array.isArray(item.otherImages)) {
+            parsedOtherImages = item.otherImages
+              .map((entry) => {
+                if (typeof entry === 'string') return { id: null, image: entry };
+                return { id: entry?.id ?? null, image: entry?.image };
+              })
+              .filter((entry) => Boolean(entry?.image));
+          } else if (Array.isArray(item.other_images)) {
+            parsedOtherImages = item.other_images
+              .map((entry) => {
+                if (typeof entry === 'string') return { id: null, image: entry };
+                return { id: entry?.id ?? null, image: entry?.image };
+              })
+              .filter((entry) => Boolean(entry?.image));
+          } else if (typeof item.other_images === 'string') {
+            try {
+              const maybeJson = JSON.parse(item.other_images);
+              if (Array.isArray(maybeJson)) {
+                parsedOtherImages = maybeJson
+                  .map((entry) => {
+                    if (typeof entry === 'string') return { id: null, image: entry };
+                    return { id: entry?.id ?? null, image: entry?.image };
+                  })
+                  .filter((entry) => Boolean(entry?.image));
+              }
+            } catch {
+              parsedOtherImages = item.other_images
+                .split(',')
+                .map((img) => img.trim())
+                .filter(Boolean)
+                .map((img) => ({ id: null, image: img }));
+            }
+          } else if (Array.isArray(item.list_of_other_image)) {
+            parsedOtherImages = item.list_of_other_image
+              .map((entry) => {
+                if (typeof entry === 'string') return { id: null, image: entry };
+                return { id: entry?.id ?? null, image: entry?.image };
+              })
+              .filter((entry) => Boolean(entry?.image));
+          } else if (item.other_image) {
+            parsedOtherImages = [{ id: null, image: item.other_image }];
+          }
+
+          const primaryImage = item.image || item.logo || parsedImages[0] || null;
+
+          return {
+            id: item.id?.toString() || Date.now().toString(),
+            title: item.title || '',
+            description: item.description || '',
+            date: item.date || item.created_at || new Date().toISOString().split('T')[0],
+            image: primaryImage,
+            otherImages: parsedOtherImages,
+            images: primaryImage
+              ? [primaryImage, ...parsedImages.filter((img) => img !== primaryImage)]
+              : parsedImages,
+            createdAt: item.created_at || item.createdAt || new Date().toISOString(),
+          };
+        });
         setNews(mappedNews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
         setNewsPagination(prev => ({ ...prev, page, limit, total }));
       } else {
@@ -1463,6 +1530,71 @@ export function AdminPanel({ onLogout }) {
     setShowAddNewsForm(true);
   };
 
+  const handleAddNewsImage = async (newsItem, files = []) => {
+    if (!files.length) return;
+    await withLoading(async () => {
+      try {
+        for (const file of files) {
+          const compressedFile = await compressImage(file, 1920, 1080, 0.8);
+          const response = await newsAPI.uploadImage(newsItem.id, compressedFile);
+          if (response.status !== 'OK') {
+            throw new Error(response.errorMessage || 'Failed to update image');
+          }
+        }
+        await fetchNews(newsPagination.page, newsPagination.limit);
+        alert(`${files.length} image(s) uploaded successfully!`);
+      } catch (err) {
+        console.error('Error updating news image:', err);
+        const errorMessage = err.response?.data?.errorMessage || err.message || 'Failed to update image. Please try again.';
+        alert(errorMessage);
+      }
+    }, 'Updating image...');
+  };
+
+  const handleDeleteNewsOtherImage = async (newsItem, imageEntry) => {
+    if (!imageEntry?.id) {
+      alert('This image cannot be deleted (missing image id).');
+      return;
+    }
+    const ok = window.confirm('Delete this image?');
+    if (!ok) return;
+
+    await withLoading(async () => {
+      try {
+        const response = await newsAPI.deleteUploadedImage(imageEntry.id);
+        if (response.status === 'OK') {
+          await fetchNews(newsPagination.page, newsPagination.limit);
+          alert('Image deleted successfully!');
+        } else {
+          alert(response.errorMessage || 'Failed to delete image');
+        }
+      } catch (err) {
+        console.error('Error deleting news image:', err);
+        const errorMessage =
+          err.response?.data?.errorMessage || err.message || 'Failed to delete image. Please try again.';
+        alert(errorMessage);
+      }
+    }, 'Deleting image...');
+  };
+
+  const getNewsIdFromSaveResponse = (response, fallbackId = null) => {
+    if (fallbackId) return fallbackId;
+    const candidateIds = [
+      response?.returnData?.id,
+      response?.returnData?.document_id,
+      response?.returnData?.news_id,
+      response?.returnData?.insert_id,
+      response?.returnData?.last_insert_id,
+      response?.id,
+      response?.document_id,
+      response?.news_id,
+      response?.insert_id,
+      response?.last_insert_id
+    ];
+    const validId = candidateIds.find((value) => value !== undefined && value !== null && value !== '');
+    return validId ?? null;
+  };
+
   const handleEditPartner = (partner) => {
     setEditingPartner(partner);
     setShowAddPartnerForm(true);
@@ -1587,6 +1719,17 @@ export function AdminPanel({ onLogout }) {
       }
       
       if (response.status === 'OK') {
+        if (newsData.image instanceof File) {
+          const documentId = getNewsIdFromSaveResponse(response, newsId);
+          if (!documentId) {
+            throw new Error('News saved but image upload failed: missing document_id from save response.');
+          }
+          const imageUploadResponse = await newsAPI.uploadImage(documentId, newsData.image);
+          if (imageUploadResponse.status !== 'OK') {
+            throw new Error(imageUploadResponse.errorMessage || 'Failed to upload image');
+          }
+        }
+
         // Refresh news list from API
           await fetchNews(newsPagination.page, newsPagination.limit);
         setShowAddNewsForm(false);
@@ -5318,6 +5461,8 @@ export function AdminPanel({ onLogout }) {
             onAddNewsClick={handleAddNewsClick}
             onDelete={handleDeleteNews}
             onEdit={handleEditNews}
+            onAddImage={handleAddNewsImage}
+            onDeleteOtherImage={handleDeleteNewsOtherImage}
             pagination={{
               currentPage: newsPagination.page,
               totalPages: Math.ceil(newsPagination.total / newsPagination.limit),

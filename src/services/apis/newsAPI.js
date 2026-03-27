@@ -32,23 +32,6 @@ export const newsAPI = {
       title: newsData.title || '',
       description: newsData.description || '',
     };
-    
-    // Add image if provided (convert file to base64 data URL)
-    if (newsData.image) {
-      if (typeof newsData.image === 'string' && newsData.image.startsWith('data:')) {
-        // Already a data URL
-        payload.image = newsData.image;
-      } else if (newsData.image instanceof File) {
-        // Convert file to base64 data URL
-        const base64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(newsData.image);
-        });
-        payload.image = base64;
-      }
-    }
 
     const response = await api.post('/api/news/iformAction', payload);
     return response.data;
@@ -72,25 +55,35 @@ export const newsAPI = {
       title: newsData.title || '',
       description: newsData.description || '',
     };
-    
-    // Add image if provided (convert file to base64 data URL)
-    if (newsData.image) {
-      if (typeof newsData.image === 'string' && newsData.image.startsWith('data:')) {
-        // Already a data URL
-        payload.image = newsData.image;
-      } else if (newsData.image instanceof File) {
-        // Convert file to base64 data URL
-        const base64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(newsData.image);
-        });
-        payload.image = base64;
-      }
-    }
 
     const response = await api.post('/api/news/iformAction', payload);
+    return response.data;
+  },
+
+  uploadImage: async (documentId, imageFile) => {
+    const formData = new FormData();
+    formData.append('form_method', 'save');
+    formData.append('document_id', documentId);
+    formData.append('image', imageFile);
+
+    const response = await api.post('/api/news/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  deleteUploadedImage: async (imageId) => {
+    const formData = new FormData();
+    formData.append('form_method', 'delete');
+    formData.append('id', imageId);
+
+    const response = await api.post('/api/news/upload', formData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     return response.data;
   },
 

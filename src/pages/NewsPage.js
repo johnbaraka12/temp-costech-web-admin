@@ -1,8 +1,52 @@
+import { useState } from 'react';
 import '../css/NewsPage.css';
 import { Pagination } from '../components/Pagination';
 import { getHtmlPreview } from '../utils/htmlUtils';
+import { NewsImagesModal } from '../components/NewsImagesModal';
 
-export function NewsPage({ onBack, onSave, news = [], onAddNewsClick, onDelete, onEdit, pagination }) {
+export function NewsPage({ onBack, onSave, news = [], onAddNewsClick, onDelete, onEdit, onAddImage, onDeleteOtherImage, pagination }) {
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedNews, setSelectedNews] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [localUploadedImages, setLocalUploadedImages] = useState({});
+
+  const openImageModal = (item) => {
+    setSelectedNews(item);
+    setImageModalOpen(true);
+  };
+
+  const closeImageModal = () => {
+    if (uploadingImage) return;
+    setImageModalOpen(false);
+    setSelectedNews(null);
+  };
+
+  const handleUploadImage = async (item, files) => {
+    if (!onAddImage) return;
+    setUploadingImage(true);
+    try {
+      await onAddImage(item, files);
+      const uploadedObjectUrls = (files || []).map((file) => URL.createObjectURL(file));
+      setLocalUploadedImages((prev) => ({
+        ...prev,
+        [item.id]: [...(prev[item.id] || []), ...uploadedObjectUrls],
+      }));
+      setImageModalOpen(false);
+      setSelectedNews(null);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleDeleteExistingImage = async (item, imageEntry) => {
+    if (!onDeleteOtherImage) return;
+    setUploadingImage(true);
+    try {
+      await onDeleteOtherImage(item, imageEntry);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   return (
     <div className="news-page">
@@ -78,6 +122,21 @@ export function NewsPage({ onBack, onSave, news = [], onAddNewsClick, onDelete, 
                       </td>
                       <td className="table-actions-cell">
                         <div className="action-buttons">
+                          {onAddImage && (
+                            <button
+                              type="button"
+                              className="add-image-button"
+                              onClick={() => openImageModal(item)}
+                              title="Add or change image"
+                            >
+                              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" aria-hidden>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h7" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 5h6M19 2v6" />
+                                <circle cx="9" cy="9" r="2" fill="none" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 15-3.086-3.086a2 2 0 00-2.828 0L6 21" />
+                              </svg>
+                            </button>
+                          )}
                           {onEdit && (
                             <button
                               className="edit-button"
@@ -120,6 +179,15 @@ export function NewsPage({ onBack, onSave, news = [], onAddNewsClick, onDelete, 
           )}
         </div>
       </div>
+      <NewsImagesModal
+        open={imageModalOpen}
+        newsItem={selectedNews}
+        localUploadedImages={selectedNews ? localUploadedImages[selectedNews.id] || [] : []}
+        onClose={closeImageModal}
+        onUpload={handleUploadImage}
+        onDeleteExisting={handleDeleteExistingImage}
+        uploading={uploadingImage}
+      />
     </div>
   );
 }
