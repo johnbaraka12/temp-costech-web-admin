@@ -1,5 +1,6 @@
 import '../css/OngoingProjectPage.css';
 import { Pagination } from '../components/Pagination';
+import { resolveUploadUrl } from '../utils/imageUrlMigration';
 
 export function OngoingProjectPage({ onBack, onSave, ongoingProjects = [], onAddProjectClick, onDelete, onEdit, pagination }) {
 
@@ -51,7 +52,7 @@ export function OngoingProjectPage({ onBack, onSave, ongoingProjects = [], onAdd
                       <td className="table-image-cell">
                         {project.image ? (
                           <img 
-                            src={project.image.startsWith('http') ? project.image : `https://costech.kingdomsolutions.co.tz/${project.image}`}
+                            src={resolveUploadUrl(project.image)}
                             alt={project.title}
                             className="project-image"
                             onError={(e) => {
@@ -117,4 +118,3 @@ export function OngoingProjectPage({ onBack, onSave, ongoingProjects = [], onAdd
     </div>
   );
 }
-

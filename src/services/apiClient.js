@@ -1,6 +1,6 @@
 import axios from 'axios';
-
-const API_BASE_URL = 'https://costech.kingdomsolutions.co.tz';
+import { API_BASE_URL } from '../config/api';
+import { migrateUploadUrls } from '../utils/imageUrlMigration';
 
 // Create axios instance
 const api = axios.create({
@@ -27,6 +27,7 @@ api.interceptors.request.use(
 // Response interceptor to handle errors
 api.interceptors.response.use(
   (response) => {
+    response.data = migrateUploadUrls(response.data);
     return response;
   },
   (error) => {

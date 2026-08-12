@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import '../css/AddOngoingProjectModal.css';
 import { compressImage } from '../utils/imageCompression';
+import { resolveUploadUrl } from '../utils/imageUrlMigration';
 
 export function AddOngoingProjectModal({ onClose, onSave, editProject = null }) {
   const [formData, setFormData] = useState({
@@ -21,10 +22,7 @@ export function AddOngoingProjectModal({ onClose, onSave, editProject = null }) 
       });
       // Set image preview if project has image URL
       if (editProject.image) {
-        const imageUrl = editProject.image.startsWith('http') 
-          ? editProject.image 
-          : `https://costech.kingdomsolutions.co.tz/${editProject.image}`;
-        setImagePreview(imageUrl);
+        setImagePreview(resolveUploadUrl(editProject.image));
       }
     }
   }, [editProject]);
@@ -212,4 +210,3 @@ export function AddOngoingProjectModal({ onClose, onSave, editProject = null }) 
     </div>
   );
 }
-

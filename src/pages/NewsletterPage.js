@@ -1,4 +1,5 @@
 import '../css/MagazinePage.css';
+import { resolveAssetUrl } from '../utils/imageUrlMigration';
 
 export function NewsletterPage({ onBack, onSave, newsletters = [], onAddNewsletterClick, onDelete, onEdit }) {
 
@@ -55,7 +56,7 @@ export function NewsletterPage({ onBack, onSave, newsletters = [], onAddNewslett
                       </td>
                       <td className="table-document-cell">
                         {newsletter.document ? (
-                          <a href={newsletter.document} target="_blank" rel="noopener noreferrer" className="document-link">
+                          <a href={resolveAssetUrl(newsletter.document)} target="_blank" rel="noopener noreferrer" className="document-link">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
@@ -102,4 +103,3 @@ export function NewsletterPage({ onBack, onSave, newsletters = [], onAddNewslett
     </div>
   );
 }
-

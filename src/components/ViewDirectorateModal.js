@@ -1,4 +1,5 @@
 import '../css/ViewDirectorateModal.css';
+import { resolveAssetUrl } from '../utils/imageUrlMigration';
 
 export function ViewDirectorateModal({ onClose, directorate }) {
   if (!directorate) return null;
@@ -69,7 +70,7 @@ export function ViewDirectorateModal({ onClose, directorate }) {
                         <li key={idx}>
                           {download.name || 'Unnamed'}
                           {download.document && (
-                            <a href={download.document} target="_blank" rel="noopener noreferrer" className="view-link">
+                            <a href={resolveAssetUrl(download.document)} target="_blank" rel="noopener noreferrer" className="view-link">
                               {' '}(View Document)
                             </a>
                           )}
@@ -85,7 +86,7 @@ export function ViewDirectorateModal({ onClose, directorate }) {
             <div className="view-field">
               <label className="view-label">Document</label>
               <div className="view-value">
-                <a href={directorate.document} target="_blank" rel="noopener noreferrer" className="view-link">
+                <a href={resolveAssetUrl(directorate.document)} target="_blank" rel="noopener noreferrer" className="view-link">
                   View Document
                 </a>
               </div>

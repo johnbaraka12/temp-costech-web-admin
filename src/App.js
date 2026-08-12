@@ -4,7 +4,9 @@ import { AdminPanel } from './pages/AdminPanel';
 import './css/App.css';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return Boolean(localStorage.getItem('access_token'));
+  });
 
   const handleLogin = () => {
     setIsLoggedIn(true);
