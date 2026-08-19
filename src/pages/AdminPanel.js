@@ -10,6 +10,7 @@ import { CommissionMembersPage } from './CommissionMembersPage';
 import { InnovationSpacePage } from './InnovationSpacePage';
 import { OnlineServicePage } from './OnlineServicePage';
 import { FinancialReportPage } from './FinancialReportPage';
+import { SponsorshipsPage } from './SponsorshipsPage';
 import { MagazinePage } from './MagazinePage';
 import { NewsletterPage } from './NewsletterPage';
 import { BooksPage } from './BooksPage';
@@ -46,6 +47,7 @@ import { AddCommissionMemberModal } from '../components/AddCommissionMemberModal
 import { AddInnovationSpaceModal } from '../components/AddInnovationSpaceModal';
 import { AddOnlineServiceModal } from '../components/AddOnlineServiceModal';
 import { AddFinancialReportModal } from '../components/AddFinancialReportModal';
+import { AddSponsorshipModal } from '../components/AddSponsorshipModal';
 import { AddMagazineModal } from '../components/AddMagazineModal';
 import { AddNewsletterModal } from '../components/AddNewsletterModal';
 import { AddBookModal } from '../components/AddBookModal';
@@ -80,7 +82,7 @@ import { DeleteConfirmationModal } from '../components/DeleteConfirmationModal';
 import { Loader } from '../components/Loader';
 import { stripHtmlTags } from '../utils/htmlUtils';
 import { compressImage } from '../utils/imageCompression';
-import { authAPI, sectionsAPI, newsAPI, partnersAPI, heroesAPI, positionAPI, managementTeamAPI, commissionMembersAPI, innovationSpaceAPI, onlineServiceAPI, financialReportAPI, magazineAPI, newsletterAPI, booksAPI, reportsAPI, actsAndLegalAPI, policiesAPI, strategicPlanAPI, guidelineDocumentsAPI, conferenceAPI, exhibitionAPI, ongoingProjectAPI, areaOfPartnershipAPI, fellowshipGrantsAPI, pressReleaseAPI, statementAPI, costechVideoAPI, communityEngagementAPI, herinInstitutionAPI, directorateAPI, faqCategoryAPI, faqAPI, footerQuickLinkAPI, footerContactUsAPI, footerEresourceAPI, socialMediaPlatformAPI, journalAPI } from '../services/api';
+import { authAPI, sectionsAPI, newsAPI, partnersAPI, heroesAPI, positionAPI, managementTeamAPI, commissionMembersAPI, innovationSpaceAPI, onlineServiceAPI, financialReportAPI, sponsorshipsAPI, magazineAPI, newsletterAPI, booksAPI, reportsAPI, actsAndLegalAPI, policiesAPI, strategicPlanAPI, guidelineDocumentsAPI, conferenceAPI, exhibitionAPI, ongoingProjectAPI, areaOfPartnershipAPI, fellowshipGrantsAPI, pressReleaseAPI, statementAPI, costechVideoAPI, communityEngagementAPI, herinInstitutionAPI, directorateAPI, faqCategoryAPI, faqAPI, footerQuickLinkAPI, footerContactUsAPI, footerEresourceAPI, socialMediaPlatformAPI, journalAPI } from '../services/api';
 
 export function AdminPanel({ onLogout }) {
   const [activeNav, setActiveNav] = useState('dashboard');
@@ -105,6 +107,7 @@ export function AdminPanel({ onLogout }) {
   const [innovationSpaces, setInnovationSpaces] = useState([]);
   const [onlineServices, setOnlineServices] = useState([]);
   const [financialReports, setFinancialReports] = useState([]);
+  const [sponsorships, setSponsorships] = useState([]);
   const [magazines, setMagazines] = useState([]);
   const [newsletters, setNewsletters] = useState([]);
   const [books, setBooks] = useState([]);
@@ -143,6 +146,7 @@ export function AdminPanel({ onLogout }) {
   const [showAddInnovationSpaceForm, setShowAddInnovationSpaceForm] = useState(false);
   const [showAddOnlineServiceForm, setShowAddOnlineServiceForm] = useState(false);
   const [showAddFinancialReportForm, setShowAddFinancialReportForm] = useState(false);
+  const [showAddSponsorshipForm, setShowAddSponsorshipForm] = useState(false);
   const [showAddMagazineForm, setShowAddMagazineForm] = useState(false);
   const [showAddNewsletterForm, setShowAddNewsletterForm] = useState(false);
   const [showAddBookForm, setShowAddBookForm] = useState(false);
@@ -179,6 +183,7 @@ export function AdminPanel({ onLogout }) {
   const [editingInnovationSpace, setEditingInnovationSpace] = useState(null);
   const [editingOnlineService, setEditingOnlineService] = useState(null);
   const [editingFinancialReport, setEditingFinancialReport] = useState(null);
+  const [editingSponsorship, setEditingSponsorship] = useState(null);
   const [editingMagazine, setEditingMagazine] = useState(null);
   const [editingNewsletter, setEditingNewsletter] = useState(null);
   const [editingBook, setEditingBook] = useState(null);
@@ -230,6 +235,7 @@ export function AdminPanel({ onLogout }) {
   const [strategicPlansPagination, setStrategicPlansPagination] = useState({ page: 1, limit: 10, total: 0 });
   const [actsAndLegalPagination, setActsAndLegalPagination] = useState({ page: 1, limit: 10, total: 0 });
   const [financialReportsPagination, setFinancialReportsPagination] = useState({ page: 1, limit: 10, total: 0 });
+  const [sponsorshipsPagination, setSponsorshipsPagination] = useState({ page: 1, limit: 10, total: 0 });
   const [pressReleasesPagination, setPressReleasesPagination] = useState({ page: 1, limit: 10, total: 0 });
   const [statementsPagination, setStatementsPagination] = useState({ page: 1, limit: 10, total: 0 });
   const [videosPagination, setVideosPagination] = useState({ page: 1, limit: 10, total: 0 });
@@ -272,6 +278,7 @@ export function AdminPanel({ onLogout }) {
     fetchTeamMembers();
     fetchOnlineServices();
     fetchFinancialReports();
+    fetchSponsorships();
     fetchMagazines();
     fetchNewsletters();
     fetchBooks();
@@ -304,7 +311,7 @@ export function AdminPanel({ onLogout }) {
   // Auto-open dropdowns when their items are active
   useEffect(() => {
     const homepageItems = ['heroes', 'news', 'partners'];
-    const publicationItems = ['books', 'magazine', 'reports', 'policies', 'guideline-documents', 'strategic-plan', 'acts-and-legal', 'financial-report', 'journal'];
+    const publicationItems = ['books', 'magazine', 'reports', 'policies', 'guideline-documents', 'strategic-plan', 'acts-and-legal', 'financial-report', 'sponsorships', 'journal'];
     const programItems = ['ongoing-project', 'area-of-partnership'];
     const eventsItems = ['exhibition', 'conference', 'community-engagement'];
     const mediaCentreItems = ['press-release', 'statement', 'costech-video', 'newsletter'];
@@ -783,6 +790,16 @@ export function AdminPanel({ onLogout }) {
   const handleFinancialReportsItemsPerPageChange = (limit) => {
     setFinancialReportsPagination(prev => ({ ...prev, page: 1, limit }));
     fetchFinancialReports(1, limit);
+  };
+
+  const handleSponsorshipsPageChange = (page) => {
+    setSponsorshipsPagination(prev => ({ ...prev, page }));
+    fetchSponsorships(page, sponsorshipsPagination.limit);
+  };
+
+  const handleSponsorshipsItemsPerPageChange = (limit) => {
+    setSponsorshipsPagination(prev => ({ ...prev, page: 1, limit }));
+    fetchSponsorships(1, limit);
   };
 
   const handlePressReleasesPageChange = (page) => {
@@ -1405,6 +1422,11 @@ export function AdminPanel({ onLogout }) {
     setActiveNav('financial-report');
   };
 
+  const handleSponsorshipsClick = (e) => {
+    e.preventDefault();
+    setActiveNav('sponsorships');
+  };
+
   const toggleDropdown = (dropdown) => {
     setOpenDropdowns(prev => ({
       ...prev,
@@ -1424,6 +1446,7 @@ export function AdminPanel({ onLogout }) {
     setShowAddInnovationSpaceForm(false);
     setShowAddOnlineServiceForm(false);
     setShowAddFinancialReportForm(false);
+    setShowAddSponsorshipForm(false);
     setShowAddMagazineForm(false);
     setShowAddBookForm(false);
     setShowAddReportForm(false);
@@ -1450,6 +1473,7 @@ export function AdminPanel({ onLogout }) {
     setShowAddCommissionMemberForm(false);
     setShowAddInnovationSpaceForm(false);
     setShowAddFinancialReportForm(false);
+    setShowAddSponsorshipForm(false);
     setShowAddMagazineForm(false);
     setShowAddBookForm(false);
     setShowAddReportForm(false);
@@ -1646,6 +1670,7 @@ export function AdminPanel({ onLogout }) {
     setShowAddInnovationSpaceForm(false);
     setShowAddOnlineServiceForm(false);
     setShowAddFinancialReportForm(false);
+    setShowAddSponsorshipForm(false);
     setShowAddMagazineForm(false);
     setShowAddBookForm(false);
     setShowAddReportForm(false);
@@ -1663,6 +1688,7 @@ export function AdminPanel({ onLogout }) {
     setEditingInnovationSpace(null);
     setEditingOnlineService(null);
     setEditingFinancialReport(null);
+    setEditingSponsorship(null);
     setEditingMagazine(null);
     setEditingBook(null);
     setEditingReport(null);
@@ -2440,6 +2466,105 @@ export function AdminPanel({ onLogout }) {
       alert(errorMessage);
     }
     }, reportId ? 'Updating financial report...' : 'Saving financial report...');
+  };
+
+  const fetchSponsorships = async (page = sponsorshipsPagination.page, limit = sponsorshipsPagination.limit) => {
+    await withLoading(async () => {
+      try {
+        const response = await sponsorshipsAPI.getAll(page, limit);
+
+        let sponsorshipsList = [];
+        let total = 0;
+
+        if (response.status === 'OK' && response.returnData?.list_of_item) {
+          sponsorshipsList = response.returnData.list_of_item;
+          total = response.returnData?.total || response.returnData?.total_count || sponsorshipsList.length;
+        } else if (response.returnData?.list_of_item) {
+          sponsorshipsList = response.returnData.list_of_item;
+          total = response.returnData?.total || response.returnData?.total_count || sponsorshipsList.length;
+        } else if (Array.isArray(response.returnData)) {
+          sponsorshipsList = response.returnData;
+          total = sponsorshipsList.length;
+        } else if (Array.isArray(response)) {
+          sponsorshipsList = response;
+          total = sponsorshipsList.length;
+        }
+
+        if (sponsorshipsList && sponsorshipsList.length > 0) {
+          const mappedSponsorships = sponsorshipsList.map(sponsorship => ({
+            id: sponsorship.id?.toString() || Date.now().toString(),
+            title: sponsorship.title || '',
+            description: sponsorship.description || '',
+            document: sponsorship.document || null,
+            createdAt: sponsorship.created_at || sponsorship.createdAt || new Date().toISOString(),
+          }));
+          setSponsorships(mappedSponsorships);
+          setSponsorshipsPagination(prev => ({ ...prev, page, limit, total }));
+        } else {
+          setSponsorships([]);
+          setSponsorshipsPagination(prev => ({ ...prev, page, limit, total: 0 }));
+        }
+      } catch (err) {
+        console.error('Error fetching sponsorships:', err);
+        setSponsorships([]);
+        setSponsorshipsPagination(prev => ({ ...prev, total: 0 }));
+      }
+    }, 'Loading sponsorships...');
+  };
+
+  const handleAddSponsorshipClick = () => {
+    setEditingSponsorship(null);
+    setShowAddSponsorshipForm(true);
+  };
+
+  const handleEditSponsorship = (sponsorship) => {
+    setEditingSponsorship(sponsorship);
+    setShowAddSponsorshipForm(true);
+  };
+
+  const handleDeleteSponsorship = async (id) => {
+    const sponsorship = sponsorships.find(item => item.id === id);
+    const sponsorshipName = sponsorship?.title || 'this sponsorship';
+    showDeleteConfirmation(id, sponsorshipName, 'sponsorship', async () => {
+      await withLoading(async () => {
+        try {
+          const response = await sponsorshipsAPI.delete(id);
+          if (response.status === 'OK') {
+            await fetchSponsorships();
+            alert('Sponsorship deleted successfully!');
+          } else {
+            alert(response.errorMessage || 'Failed to delete sponsorship');
+          }
+        } catch (err) {
+          console.error('Error deleting sponsorship:', err);
+          const errorMessage = err.response?.data?.errorMessage || err.message || 'Failed to delete sponsorship. Please try again.';
+          alert(errorMessage);
+        }
+      }, 'Deleting sponsorship...');
+    });
+  };
+
+  const handleSaveSponsorship = async (sponsorshipData, sponsorshipId) => {
+    await withLoading(async () => {
+      try {
+        const response = sponsorshipId
+          ? await sponsorshipsAPI.update(sponsorshipId, sponsorshipData)
+          : await sponsorshipsAPI.create(sponsorshipData);
+
+        if (response.status === 'OK') {
+          await fetchSponsorships();
+          setShowAddSponsorshipForm(false);
+          setEditingSponsorship(null);
+          alert(sponsorshipId ? 'Sponsorship updated successfully!' : 'Sponsorship saved successfully!');
+        } else {
+          alert(response.errorMessage || (sponsorshipId ? 'Failed to update sponsorship' : 'Failed to save sponsorship'));
+        }
+      } catch (err) {
+        console.error('Error saving sponsorship:', err);
+        const errorMessage = err.response?.data?.errorMessage || err.message || (sponsorshipId ? 'Failed to update sponsorship. Please try again.' : 'Failed to save sponsorship. Please try again.');
+        alert(errorMessage);
+      }
+    }, sponsorshipId ? 'Updating sponsorship...' : 'Saving sponsorship...');
   };
 
   const fetchMagazines = async (page = magazinesPagination.page, limit = magazinesPagination.limit) => {
@@ -5104,7 +5229,7 @@ export function AdminPanel({ onLogout }) {
           {/* PUBLICATION Dropdown */}
           <div className="nav-dropdown">
             <div 
-              className={`nav-dropdown-header ${openDropdowns.publication ? 'open' : ''} ${['books', 'magazine', 'reports', 'policies', 'guideline-documents', 'strategic-plan', 'acts-and-legal', 'financial-report', 'journal'].includes(activeNav) ? 'active' : ''}`}
+              className={`nav-dropdown-header ${openDropdowns.publication ? 'open' : ''} ${['books', 'magazine', 'reports', 'policies', 'guideline-documents', 'strategic-plan', 'acts-and-legal', 'financial-report', 'sponsorships', 'journal'].includes(activeNav) ? 'active' : ''}`}
               onClick={() => toggleDropdown('publication')}
             >
               <div className="nav-dropdown-title">
@@ -5197,6 +5322,16 @@ export function AdminPanel({ onLogout }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
                 <span>Financial Report</span>
+              </a>
+              <a
+                href="#sponsorships"
+                className={`nav-dropdown-item ${activeNav === 'sponsorships' ? 'active' : ''}`}
+                onClick={handleSponsorshipsClick}
+              >
+                <svg className="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Sponsorships</span>
               </a>
               <a
                 href="#journal"
@@ -5618,6 +5753,23 @@ export function AdminPanel({ onLogout }) {
               totalItems: financialReportsPagination.total,
               onPageChange: handleFinancialReportsPageChange,
               onItemsPerPageChange: handleFinancialReportsItemsPerPageChange
+            }}
+          />
+        ) : activeNav === 'sponsorships' ? (
+          <SponsorshipsPage
+            onBack={handleBackToDashboard}
+            onSave={handleSaveSponsorship}
+            sponsorships={sponsorships}
+            onAddSponsorshipClick={handleAddSponsorshipClick}
+            onDelete={handleDeleteSponsorship}
+            onEdit={handleEditSponsorship}
+            pagination={{
+              currentPage: sponsorshipsPagination.page,
+              totalPages: Math.ceil(sponsorshipsPagination.total / sponsorshipsPagination.limit),
+              itemsPerPage: sponsorshipsPagination.limit,
+              totalItems: sponsorshipsPagination.total,
+              onPageChange: handleSponsorshipsPageChange,
+              onItemsPerPageChange: handleSponsorshipsItemsPerPageChange
             }}
           />
         ) : activeNav === 'magazine' ? (
@@ -6273,6 +6425,16 @@ export function AdminPanel({ onLogout }) {
           editReport={editingFinancialReport}
         />
       )}
+      {showAddSponsorshipForm && (
+        <AddSponsorshipModal
+          onClose={() => {
+            setShowAddSponsorshipForm(false);
+            setEditingSponsorship(null);
+          }}
+          onSave={handleSaveSponsorship}
+          editSponsorship={editingSponsorship}
+        />
+      )}
       {showAddMagazineForm && (
         <AddMagazineModal
           onClose={() => {
@@ -6557,4 +6719,3 @@ export function AdminPanel({ onLogout }) {
     </div>
   );
 }
-

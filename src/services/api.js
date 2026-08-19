@@ -35,6 +35,7 @@ export { onlineServiceAPI } from './apis/onlineServiceAPI';
 
 // Financial Report API
 export { financialReportAPI } from './apis/financialReportAPI';
+export { sponsorshipsAPI } from './apis/sponsorshipsAPI';
 
 // Magazine API
 export { magazineAPI } from './apis/magazineAPI';
