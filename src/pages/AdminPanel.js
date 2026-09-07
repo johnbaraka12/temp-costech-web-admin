@@ -84,8 +84,68 @@ import { stripHtmlTags } from '../utils/htmlUtils';
 import { compressImage } from '../utils/imageCompression';
 import { authAPI, sectionsAPI, newsAPI, partnersAPI, heroesAPI, positionAPI, managementTeamAPI, commissionMembersAPI, innovationSpaceAPI, onlineServiceAPI, financialReportAPI, sponsorshipsAPI, magazineAPI, newsletterAPI, booksAPI, reportsAPI, actsAndLegalAPI, policiesAPI, strategicPlanAPI, guidelineDocumentsAPI, conferenceAPI, exhibitionAPI, ongoingProjectAPI, areaOfPartnershipAPI, fellowshipGrantsAPI, pressReleaseAPI, statementAPI, costechVideoAPI, communityEngagementAPI, herinInstitutionAPI, directorateAPI, faqCategoryAPI, faqAPI, footerQuickLinkAPI, footerContactUsAPI, footerEresourceAPI, socialMediaPlatformAPI, journalAPI } from '../services/api';
 
+const NAV_STORAGE_KEY = 'costech_admin_active_nav';
+
+const HASH_TO_NAV = {
+  dashboard: 'dashboard',
+  section: 'SECTION',
+  heroes: 'heroes',
+  news: 'news',
+  partners: 'partners',
+  positions: 'positions',
+  'management-team': 'management-team',
+  'commission-members': 'commission-members',
+  'faq-category': 'faq-category',
+  faq: 'faq',
+  'innovation-space': 'innovation-space',
+  'online-service': 'online-service',
+  'herin-institution': 'herin-institution',
+  books: 'books',
+  magazine: 'magazine',
+  reports: 'reports',
+  policies: 'policies',
+  'guideline-documents': 'guideline-documents',
+  'strategic-plan': 'strategic-plan',
+  'acts-and-legal': 'acts-and-legal',
+  'financial-report': 'financial-report',
+  sponsorships: 'sponsorships',
+  journal: 'journal',
+  'ongoing-project': 'ongoing-project',
+  'area-of-partnership': 'area-of-partnership',
+  exhibition: 'exhibition',
+  conference: 'conference',
+  'community-engagement': 'community-engagement',
+  'fellowship-grants': 'fellowship-grants',
+  'press-release': 'press-release',
+  statement: 'statement',
+  'costech-video': 'costech-video',
+  newsletter: 'newsletter',
+  directorate: 'directorate',
+  'footer-quick-link': 'footer-quick-link',
+  'footer-contact-us': 'footer-contact-us',
+  'footer-eresource': 'footer-eresource',
+  'social-media-platform': 'social-media-platform',
+};
+
+const NAV_TO_HASH = Object.fromEntries(
+  Object.entries(HASH_TO_NAV).map(([hash, nav]) => [nav, hash])
+);
+
+const getNavFromHash = () => {
+  const hash = window.location.hash.replace(/^#/, '');
+  return HASH_TO_NAV[hash] || null;
+};
+
+const getInitialActiveNav = () => {
+  const navFromHash = getNavFromHash();
+  if (navFromHash) return navFromHash;
+
+  const storedNav = localStorage.getItem(NAV_STORAGE_KEY);
+  return NAV_TO_HASH[storedNav] ? storedNav : 'dashboard';
+};
+
 export function AdminPanel({ onLogout }) {
-  const [activeNav, setActiveNav] = useState('dashboard');
+  const [activeNav, setActiveNav] = useState(getInitialActiveNav);
   const [openDropdowns, setOpenDropdowns] = useState({
     homepage: false,
     publication: false,
@@ -267,6 +327,27 @@ export function AdminPanel({ onLogout }) {
   const [savingNews, setSavingNews] = useState(false);
   const [savingHero, setSavingHero] = useState(false);
   const [savingPartner, setSavingPartner] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem(NAV_STORAGE_KEY, activeNav);
+
+    const hash = NAV_TO_HASH[activeNav];
+    if (hash && window.location.hash !== `#${hash}`) {
+      window.history.replaceState(null, '', `#${hash}`);
+    }
+  }, [activeNav]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const nextNav = getNavFromHash();
+      if (nextNav) {
+        setActiveNav(nextNav);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Fetch sections, news, partners, heroes, positions, and team members on component mount
   useEffect(() => {
